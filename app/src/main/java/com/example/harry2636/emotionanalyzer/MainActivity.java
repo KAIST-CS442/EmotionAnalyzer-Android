@@ -26,8 +26,6 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,15 +37,13 @@ import java.util.Date;
 
 /* Referred http://android-coffee.com/tutorial-play-youtube-video/ for Youtube player API*/
 public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.OnInitializedListener{
-  public static final String API_KEY = "AIzaSyDKYGldszOioPAiSFTKrto200NbSEg1aVI";
-  public static final String VIDEO_ID = "8A2t_tAjMz8"; // Twice Knock Knock video id
-
+  private static YouTubePlayer player;
   private Camera mCamera;
   private CameraPreview mPreview;
   public static int cameraId = 0;
 
-  //TODO: fix ip address
-  public static final String SERVER_ADDRESS = "http://target ip address"; //This must not be localhost!!!
+  private static boolean sendFlag = false;
+  private static final Object sendLock = new Object();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +52,7 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
 
 
     YouTubePlayerView youTubePlayerView = (YouTubePlayerView) findViewById(R.id.youtube_player);
-    youTubePlayerView.initialize(API_KEY, this);
+    youTubePlayerView.initialize(Configuration.API_KEY, this);
 
     // Add a listener to the Capture button
     Button captureButton = (Button) findViewById(R.id.button_capture);
@@ -142,24 +138,10 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
       Log.d("picture", "picture sent to server");
-      PostImageTask postImageTask = new PostImageTask(data);
-      postImageTask.execute();
-
-      File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
-      if (pictureFile == null){
-        Log.d(TAG, "Error creating media file, check storage permissions:");
-        return;
-      }
-
-      try {
-        FileOutputStream fos = new FileOutputStream(pictureFile);
-        fos.write(data);
-        fos.close();
-      } catch (FileNotFoundException e) {
-        Log.d(TAG, "File not found: " + e.getMessage());
-      } catch (IOException e) {
-        Log.d(TAG, "Error accessing file: " + e.getMessage());
-      }
+      PostImageTask postImageTask = new PostImageTask(data,
+          MainActivity.player.getCurrentTimeMillis(), Configuration.VIDEO_ID);
+      postImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+      mCamera.startPreview();
     }
   };
 
@@ -211,24 +193,45 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
     player.setPlaybackEventListener(playbackEventListener);
 /** Start buffering **/
     if (!wasRestored) {
-      player.cueVideo(VIDEO_ID);
+      player.cueVideo(Configuration.VIDEO_ID);
     }
+
+    MainActivity.player = player;
   }
   private YouTubePlayer.PlaybackEventListener playbackEventListener = new YouTubePlayer.PlaybackEventListener() {
     @Override
     public void onBuffering(boolean arg0) {
     }
+
     @Override
     public void onPaused() {
+      synchronized (sendLock) {
+        sendFlag = false;
+      }
+      Toast.makeText(MainActivity.this, "Video is paused", Toast.LENGTH_LONG).show();
     }
+
     @Override
     public void onPlaying() {
+      synchronized (sendLock) {
+        sendFlag = true;
+      }
+      Toast.makeText(MainActivity.this, "Video is playing", Toast.LENGTH_LONG).show();
+
+      PictureLoopTask pictureLoopTask = new PictureLoopTask();
+      pictureLoopTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
+
     @Override
     public void onSeekTo(int arg0) {
     }
+
     @Override
     public void onStopped() {
+      synchronized (sendLock) {
+        sendFlag = false;
+      }
+      Toast.makeText(MainActivity.this, "Video is stopped", Toast.LENGTH_LONG).show();
     }
   };
   private YouTubePlayer.PlayerStateChangeListener playerStateChangeListener = new YouTubePlayer.PlayerStateChangeListener() {
@@ -240,6 +243,7 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
     }
     @Override
     public void onLoaded(String arg0) {
+      //Toast.makeText(MainActivity.this, "Video is loading", Toast.LENGTH_LONG).show();
     }
     @Override
     public void onLoading() {
@@ -249,14 +253,19 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
     }
     @Override
     public void onVideoStarted() {
+      //Toast.makeText(MainActivity.this, "Video started", Toast.LENGTH_LONG).show();
     }
   };
 
   private class PostImageTask extends AsyncTask<String, Void, String> {
     byte[] data;
+    int time;
+    String videoId;
 
-    public PostImageTask(byte[] data) {
+    public PostImageTask(byte[] data, int time, String videoId) {
       this.data = data;
+      this.time = time;
+      this.videoId = videoId;
     }
 
     protected String doInBackground(String... urls) {
@@ -272,7 +281,7 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
     private String postImageToServer(byte[] data) {
 
       try {
-        URL url = new URL(SERVER_ADDRESS);
+        URL url = new URL(Configuration.SERVER_ADDRESS);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setDoInput(true);
         connection.setDoOutput(true);
@@ -282,7 +291,8 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
         Log.d("imageLength", encodedImage.length() +"");
         JSONObject object = new JSONObject();
         object.put("userId", 1);
-        object.put("videoId", VIDEO_ID);
+        object.put("videoId", videoId);
+        object.put("time", this.time);
         object.put("image", encodedImage);
 
         OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
@@ -308,6 +318,30 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
         e.printStackTrace();
       }
       return "error";
+    }
+  }
+
+  private class PictureLoopTask extends AsyncTask<String, Void, String> {
+
+    public PictureLoopTask() {
+    }
+
+    protected String doInBackground(String... urls) {
+      while (sendFlag) {
+        mCamera.takePicture(null, null, mPicture);
+        Log.d("position", MainActivity.player.getCurrentTimeMillis() + "");
+        try {
+          Thread.sleep(3000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+      return "done";
+    }
+
+    protected void onPostExecute(String result) {
+      super.onPostExecute(result);
+      Log.d("loop", result);
     }
   }
 }
