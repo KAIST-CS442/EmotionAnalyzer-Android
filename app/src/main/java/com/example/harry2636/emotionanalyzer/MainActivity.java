@@ -10,18 +10,30 @@ import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 
 import android.hardware.Camera;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -33,6 +45,9 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
   private Camera mCamera;
   private CameraPreview mPreview;
   public static int cameraId = 0;
+
+  //TODO: fix ip address
+  public static final String SERVER_ADDRESS = "http://target ip address"; //This must not be localhost!!!
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -126,6 +141,9 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
 
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
+      Log.d("picture", "picture sent to server");
+      PostImageTask postImageTask = new PostImageTask(data);
+      postImageTask.execute();
 
       File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
       if (pictureFile == null){
@@ -233,4 +251,63 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
     public void onVideoStarted() {
     }
   };
+
+  private class PostImageTask extends AsyncTask<String, Void, String> {
+    byte[] data;
+
+    public PostImageTask(byte[] data) {
+      this.data = data;
+    }
+
+    protected String doInBackground(String... urls) {
+      String result = postImageToServer(data);
+      return result;
+    }
+
+    protected void onPostExecute(String result) {
+      super.onPostExecute(result);
+      Log.d("result", result);
+    }
+
+    private String postImageToServer(byte[] data) {
+
+      try {
+        URL url = new URL(SERVER_ADDRESS);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setDoInput(true);
+        connection.setDoOutput(true);
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestMethod("POST");
+        String encodedImage = Base64.encodeToString(data, Base64.DEFAULT);
+        Log.d("imageLength", encodedImage.length() +"");
+        JSONObject object = new JSONObject();
+        object.put("userId", 1);
+        object.put("videoId", VIDEO_ID);
+        object.put("image", encodedImage);
+
+        OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
+        writer.write(object.toString());
+        writer.flush();
+        writer.close();
+
+        InputStream in = new BufferedInputStream(connection.getInputStream());
+        BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+        StringBuilder responseStrBuilder = new StringBuilder();
+
+        String inputStr;
+        while ((inputStr = streamReader.readLine()) != null)
+          responseStrBuilder.append(inputStr);
+        JSONObject result = new JSONObject(responseStrBuilder.toString());
+
+        in.close();
+        connection.disconnect();
+        return result.get("ok").toString();
+      } catch (IOException e) {
+        e.printStackTrace();
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
+      return "error";
+    }
+  }
 }
