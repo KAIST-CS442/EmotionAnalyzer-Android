@@ -34,6 +34,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 /* Referred http://android-coffee.com/tutorial-play-youtube-video/ for Youtube player API*/
 public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.OnInitializedListener{
@@ -44,6 +45,7 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
 
   private static boolean sendFlag = false;
   private static final Object sendLock = new Object();
+  private int randomId;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +67,9 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
           }
         }
     );
+
+    Random r = new Random();
+    randomId = r.nextInt();
   }
   private void initializeCamera() {
     // Create an instance of Camera
@@ -290,7 +295,7 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
         String encodedImage = Base64.encodeToString(data, Base64.DEFAULT);
         Log.d("imageLength", encodedImage.length() +"");
         JSONObject object = new JSONObject();
-        object.put("userId", 1);
+        object.put("userId", randomId);
         object.put("videoId", videoId);
         object.put("time", this.time);
         object.put("image", encodedImage);
@@ -331,7 +336,7 @@ public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.
         mCamera.takePicture(null, null, mPicture);
         Log.d("position", MainActivity.player.getCurrentTimeMillis() + "");
         try {
-          Thread.sleep(3000);
+          Thread.sleep(1000);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
