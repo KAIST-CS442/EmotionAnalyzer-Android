@@ -1,352 +1,94 @@
 package com.example.harry2636.emotionanalyzer;
 
-import static android.content.ContentValues.TAG;
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
-
-import com.google.android.youtube.player.YouTubeBaseActivity;
-import com.google.android.youtube.player.YouTubeInitializationResult;
-import com.google.android.youtube.player.YouTubePlayer;
-import com.google.android.youtube.player.YouTubePlayerView;
-
-import android.hardware.Camera;
-import android.os.AsyncTask;
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Environment;
-import android.util.Base64;
-import android.util.Log;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.Toast;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+/**
+ * Created by harrykim on 2017. 5. 23..
+ */
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Random;
-
-/* Referred http://android-coffee.com/tutorial-play-youtube-video/ for Youtube player API*/
-public class MainActivity extends YouTubeBaseActivity implements  YouTubePlayer.OnInitializedListener{
-  private static YouTubePlayer player;
-  private Camera mCamera;
-  private CameraPreview mPreview;
-  public static int cameraId = 0;
-
-  private static boolean sendFlag = false;
-  private static final Object sendLock = new Object();
-  private int randomId;
+public class MainActivity extends AppCompatActivity {
+  public final int MY_PERMISSIONS_REQUEST_CAMERA = 1;
+  public final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 2;
+  public final int ASK_MULTIPLE_PERMISSION = 3;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    setContentView(R.layout.main);
 
+    if ( (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) ||
+        (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
+      ActivityCompat.requestPermissions(this,
+          new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+          ASK_MULTIPLE_PERMISSION);
+    }
 
-    YouTubePlayerView youTubePlayerView = (YouTubePlayerView) findViewById(R.id.youtube_player);
-    youTubePlayerView.initialize(Configuration.API_KEY, this);
+    Button videoWatchPageButton = (Button) findViewById(R.id.videoListPageButton);
+    videoWatchPageButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        moveToVideoListPage();
+      }
+    });
 
-    // Add a listener to the Capture button
-    Button captureButton = (Button) findViewById(R.id.button_capture);
-    captureButton.setOnClickListener(
-        new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
-            // get an image from the camera
-            mCamera.takePicture(null, null, mPicture);
+    Button highlightWatchPageButton = (Button) findViewById(R.id.highlightListPageButton);
+    highlightWatchPageButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        moveToHighlightListPage();
+      }
+    });
+
+  }
+
+  private void moveToVideoListPage() {
+    Intent intent = new Intent(this, VideoListActivity.class);
+    startActivity(intent);
+  }
+
+  private void moveToHighlightListPage() {
+    Intent intent = new Intent(this, HighlightListActivity.class);
+    startActivity(intent);
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode,
+                                         String permissions[], int[] grantResults) {
+    switch (requestCode) {
+      case ASK_MULTIPLE_PERMISSION: {
+        // If request is cancelled, the result arrays are empty.
+        if (grantResults.length > 0) {
+          boolean cameraPermission = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+          boolean writeExternalFile = grantResults[1] == PackageManager.PERMISSION_GRANTED;
+
+          if (cameraPermission && writeExternalFile) {
+
+          } else {
+            System.exit(0);
           }
+
+          // permission was granted, yay! Do the
+          // contacts-related task you need to do.
+
+        } else {
+          System.exit(0);
+
+          // permission denied, boo! Disable the
+          // functionality that depends on this permission.
         }
-    );
-
-    Random r = new Random();
-    randomId = r.nextInt();
-  }
-  private void initializeCamera() {
-    // Create an instance of Camera
-    mCamera = getFrontCamera();
-
-    // Create our Preview view and set it as the content of our activity.
-    mPreview = new CameraPreview(this, mCamera);
-    FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
-    preview.addView(mPreview);
-  }
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-    initializeCamera();              // release the camera immediately on pause event
-  }
-
-  @Override
-  protected void onPause() {
-    super.onPause();
-    releaseCamera();              // release the camera immediately on pause event
-  }
-
-  private void releaseCamera(){
-    if (mCamera != null){
-      mCamera.stopPreview();
-      FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
-      preview.removeAllViews();
-      mPreview = null;
-      mCamera.release();        // release the camera for other applications
-      mCamera = null;
-    }
-  }
-
-
-  /** Primary camera is usually back camera*/
-  public Camera getPrimaryCamera(){
-    Camera camera = null;
-    try {
-      camera = Camera.open(); // attempt to get a Camera instance
-    }
-    catch (Exception e){
-      Log.e(TAG, "Camera failed to open: " + e.getLocalizedMessage());
-      // Camera is not available (in use or does not exist)
-    }
-    return camera; // returns null if camera is unavailable
-  }
-
-  public Camera getFrontCamera() {
-    int cameraCount = 0;
-    Camera camera = null;
-    Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-    cameraCount = Camera.getNumberOfCameras();
-    for (int camIdx = 0; camIdx < cameraCount; camIdx++) {
-      Camera.getCameraInfo(camIdx, cameraInfo);
-      if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-        try {
-          cameraId = camIdx;
-          camera = Camera.open(camIdx);
-        } catch (RuntimeException e) {
-          Log.e(TAG, "Camera failed to open: " + e.getLocalizedMessage());
-        }
+        return;
       }
-    }
 
-    return camera;
-  }
-
-  private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
-
-    @Override
-    public void onPictureTaken(byte[] data, Camera camera) {
-      Log.d("picture", "picture sent to server");
-      PostImageTask postImageTask = new PostImageTask(data,
-          MainActivity.player.getCurrentTimeMillis(), Configuration.VIDEO_ID);
-      postImageTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-      mCamera.startPreview();
-    }
-  };
-
-  /** Create a File for saving an image or video */
-  private static File getOutputMediaFile(int type){
-    // To be safe, you should check that the SDCard is mounted
-    // using Environment.getExternalStorageState() before doing this.
-
-    File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-        Environment.DIRECTORY_PICTURES), "MyCameraApp");
-    // This location works best if you want the created images to be shared
-    // between applications and persist after your app has been uninstalled.
-
-    // Create the storage directory if it does not exist
-    if (! mediaStorageDir.exists()){
-      if (! mediaStorageDir.mkdirs()){
-        Log.d("MyCameraApp", "failed to create directory");
-        return null;
-      }
-    }
-
-    // Create a media file name
-    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-    File mediaFile;
-    if (type == MEDIA_TYPE_IMAGE){
-      mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-          "IMG_"+ timeStamp + ".jpg");
-    } else if(type == MEDIA_TYPE_VIDEO) {
-      mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-          "VID_"+ timeStamp + ".mp4");
-    } else {
-      return null;
-    }
-    return mediaFile;
-  }
-
-
-
-  /* Youtube related functions */
-
-  @Override
-  public void onInitializationFailure(YouTubePlayer.Provider provider, YouTubeInitializationResult result) {
-    Toast.makeText(this, "Failured to Initialize!", Toast.LENGTH_LONG).show();
-  }
-  @Override
-  public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer player, boolean wasRestored) {
-/** add listeners to YouTubePlayer instance **/
-    player.setPlayerStateChangeListener(playerStateChangeListener);
-    player.setPlaybackEventListener(playbackEventListener);
-/** Start buffering **/
-    if (!wasRestored) {
-      player.cueVideo(Configuration.VIDEO_ID);
-    }
-
-    MainActivity.player = player;
-  }
-  private YouTubePlayer.PlaybackEventListener playbackEventListener = new YouTubePlayer.PlaybackEventListener() {
-    @Override
-    public void onBuffering(boolean arg0) {
-    }
-
-    @Override
-    public void onPaused() {
-      synchronized (sendLock) {
-        sendFlag = false;
-      }
-      Toast.makeText(MainActivity.this, "Video is paused", Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onPlaying() {
-      synchronized (sendLock) {
-        sendFlag = true;
-      }
-      Toast.makeText(MainActivity.this, "Video is playing", Toast.LENGTH_LONG).show();
-
-      PictureLoopTask pictureLoopTask = new PictureLoopTask();
-      pictureLoopTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    }
-
-    @Override
-    public void onSeekTo(int arg0) {
-    }
-
-    @Override
-    public void onStopped() {
-      synchronized (sendLock) {
-        sendFlag = false;
-      }
-      Toast.makeText(MainActivity.this, "Video is stopped", Toast.LENGTH_LONG).show();
-    }
-  };
-  private YouTubePlayer.PlayerStateChangeListener playerStateChangeListener = new YouTubePlayer.PlayerStateChangeListener() {
-    @Override
-    public void onAdStarted() {
-    }
-    @Override
-    public void onError(YouTubePlayer.ErrorReason arg0) {
-    }
-    @Override
-    public void onLoaded(String arg0) {
-      //Toast.makeText(MainActivity.this, "Video is loading", Toast.LENGTH_LONG).show();
-    }
-    @Override
-    public void onLoading() {
-    }
-    @Override
-    public void onVideoEnded() {
-    }
-    @Override
-    public void onVideoStarted() {
-      //Toast.makeText(MainActivity.this, "Video started", Toast.LENGTH_LONG).show();
-    }
-  };
-
-  private class PostImageTask extends AsyncTask<String, Void, String> {
-    byte[] data;
-    int time;
-    String videoId;
-
-    public PostImageTask(byte[] data, int time, String videoId) {
-      this.data = data;
-      this.time = time;
-      this.videoId = videoId;
-    }
-
-    protected String doInBackground(String... urls) {
-      String result = postImageToServer(data);
-      return result;
-    }
-
-    protected void onPostExecute(String result) {
-      super.onPostExecute(result);
-      Log.d("result", result);
-    }
-
-    private String postImageToServer(byte[] data) {
-
-      try {
-        URL url = new URL(Configuration.SERVER_ADDRESS);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setDoInput(true);
-        connection.setDoOutput(true);
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestMethod("POST");
-        String encodedImage = Base64.encodeToString(data, Base64.DEFAULT);
-        Log.d("imageLength", encodedImage.length() +"");
-        JSONObject object = new JSONObject();
-        object.put("userId", randomId);
-        object.put("videoId", videoId);
-        object.put("time", this.time);
-        object.put("image", encodedImage);
-
-        OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
-        writer.write(object.toString());
-        writer.flush();
-        writer.close();
-
-        InputStream in = new BufferedInputStream(connection.getInputStream());
-        BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-        StringBuilder responseStrBuilder = new StringBuilder();
-
-        String inputStr;
-        while ((inputStr = streamReader.readLine()) != null)
-          responseStrBuilder.append(inputStr);
-        JSONObject result = new JSONObject(responseStrBuilder.toString());
-
-        in.close();
-        connection.disconnect();
-        return result.get("ok").toString();
-      } catch (IOException e) {
-        e.printStackTrace();
-      } catch (JSONException e) {
-        e.printStackTrace();
-      }
-      return "error";
+      // other 'case' lines to check for other
+      // permissions this app might request
     }
   }
 
-  private class PictureLoopTask extends AsyncTask<String, Void, String> {
-
-    public PictureLoopTask() {
-    }
-
-    protected String doInBackground(String... urls) {
-      while (sendFlag) {
-        mCamera.takePicture(null, null, mPicture);
-        Log.d("position", MainActivity.player.getCurrentTimeMillis() + "");
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-      return "done";
-    }
-
-    protected void onPostExecute(String result) {
-      super.onPostExecute(result);
-      Log.d("loop", result);
-    }
-  }
 }

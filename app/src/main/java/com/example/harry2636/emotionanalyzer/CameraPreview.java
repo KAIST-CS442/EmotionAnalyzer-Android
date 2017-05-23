@@ -75,7 +75,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     // start preview with new settings
     try {
-      setCameraDisplayOrientation((Activity)getContext(), MainActivity.cameraId, mCamera);
+      setCameraDisplayOrientation((Activity)getContext(), VideoWatchActivity.cameraId, mCamera);
       mCamera.setPreviewDisplay(mHolder);
 
       Camera.Parameters parameters = mCamera.getParameters();

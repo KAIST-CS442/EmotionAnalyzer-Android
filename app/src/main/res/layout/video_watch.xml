@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.harry2636.emotionanalyzer.MainActivity">
+    tools:context="com.example.harry2636.emotionanalyzer.VideoWatchActivity">
   <ScrollView
       android:layout_width="match_parent"
       android:layout_height="match_parent">
@@ -21,10 +21,9 @@
       <FrameLayout
           android:id="@+id/camera_preview"
           android:layout_width="match_parent"
-          android:layout_height="50px"
-          android:layout_weight="1"/>
+          android:layout_height="20px"/>
 
-      <Button
+      <!-- <Button
           android:id="@+id/button_capture"
           android:text="Capture"
           android:layout_width="match_parent"
@@ -34,7 +33,7 @@
       <ImageView
           android:id="@+id/selfImage"
           android:layout_width="match_parent"
-          android:layout_height="wrap_content"/>
+          android:layout_height="wrap_content"/> -->
     </LinearLayout>
   </ScrollView>
 </LinearLayout>
