@@ -1,6 +1,7 @@
 package com.example.harry2636.emotionanalyzer;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -32,8 +33,12 @@ public class HighlightWatchActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.highlight_watch);
+    Intent listIntent = getIntent();
+    String highlight_url = listIntent.getStringExtra("highlight_url");
+
     DownloadVideoTask videoTask = new DownloadVideoTask();
-    videoTask.execute("http://143.248.198.101:3000/6dZWm1DhQeQ_highlight_0.mp4");
+    videoTask.execute(highlight_url);
+    // videoTask.execute("http://143.248.198.101:3000/6dZWm1DhQeQ_highlight_0.mp4");
     //videoTask.execute("http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_1mb.mp4");
   }
 

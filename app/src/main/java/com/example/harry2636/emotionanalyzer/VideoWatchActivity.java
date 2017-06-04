@@ -291,7 +291,7 @@ public class VideoWatchActivity extends YouTubeBaseActivity implements  YouTubeP
     private String postImageToServer(byte[] data) {
 
       try {
-        URL url = new URL(Configuration.SERVER_ADDRESS);
+        URL url = new URL(Configuration.SERVER_ADDRESS + "/face");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setDoInput(true);
         connection.setDoOutput(true);

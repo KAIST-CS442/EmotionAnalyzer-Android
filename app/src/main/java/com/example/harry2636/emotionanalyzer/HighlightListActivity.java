@@ -12,8 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -39,31 +37,20 @@ import java.util.ArrayList;
  */
 
 public class HighlightListActivity extends AppCompatActivity {
-  private EditText et;
-  AsyncTask<?, ?, ?> searchTask;
+  AsyncTask<?, ?, ?> highlightTask;
   ArrayList<SearchData> sdata = new ArrayList<SearchData>();
   String videoId = "";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.video_list);
+    setContentView(R.layout.highlight_list);
 
-    et = (EditText) findViewById(R.id.eturl);
-
-    Button search = (Button) findViewById(R.id.search);
-    search.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        searchTask = new searchTask().execute();
-
-      }
-    });
-
+    highlightTask = new GetHighlightTask().execute();
   }
 
   /* Referred from http://ondestroy.tistory.com/entry/안드로이드-유튜브youtube-v3-동영상-리스트-검색하기 */
-  private class searchTask extends AsyncTask<Void, Void, Void> {
+  private class GetHighlightTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected void onPreExecute() {
       super.onPreExecute();
@@ -72,7 +59,7 @@ public class HighlightListActivity extends AppCompatActivity {
     @Override
     protected Void doInBackground(Void... params) {
       try {
-        parsingJsonData(searchFromYouTube());
+        parsingJsonData(getListFromServer());
       } catch (JSONException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -94,16 +81,9 @@ public class HighlightListActivity extends AppCompatActivity {
     }
   }
 
-  public JSONObject searchFromYouTube() {
-
-    String queryUrl =
-        "https://www.googleapis.com/youtube/v3/search?"
-            + "part=snippet&q=" + et.getText().toString()
-            + "&key="+ Configuration.API_KEY+"&maxResults=50";
-
-    Log.e("queryUrl", queryUrl);
+  public JSONObject getListFromServer() {
+    String queryUrl = Configuration.SERVER_ADDRESS + "/list";
     JSONObject searchJson = getJsonFromUrl(queryUrl);
-
     return searchJson;
   }
 
@@ -116,36 +96,17 @@ public class HighlightListActivity extends AppCompatActivity {
     JSONArray contacts = jsonObject.getJSONArray("items");
 
     for (int i = 0; i < contacts.length(); i++) {
-      JSONObject c = contacts.getJSONObject(i);
-      String kind =  c.getJSONObject("id").getString("kind"); // 종류를 체크하여 playlist도 저장
-      if(kind.equals("youtube#video")){
-        videoId = c.getJSONObject("id").getString("videoId"); // 유튜브
-        // 동영상
-        // 아이디
-        // 값입니다.
-        // 재생시
-        // 필요합니다.
-      }else{
-        continue;
-        //videoId = c.getJSONObject("id").getString("playlistId"); // 유튜브
-      }
+      /* returns [{ video_id: 'video_id', video_name: 'video_name',
+       * highlight_url: 'highlight_url', thumbnail_url: 'thumbnail_url'}]
+       */
+      JSONObject highlight = contacts.getJSONObject(i);
+      String video_id = highlight.getString("video_id");
+      String video_name = highlight.getString("video_name");
+      String highlight_url = highlight.getString("highlight_url");
+      String imgUrl = highlight.getString("thumbnail_url");
 
-      String title = c.getJSONObject("snippet").getString("title"); //유튜브 제목을 받아옵니다
-      String changString = "";
-      try {
-        //TODO: check and erase
-        changString = new String(title.getBytes("8859_1"), "utf-8"); //한글이 깨져서 인코딩 해주었습니다
-      } catch (UnsupportedEncodingException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      changString = title;
-
-      String date = c.getJSONObject("snippet").getString("publishedAt") //등록날짜
-          .substring(0, 10);
-      String imgUrl = c.getJSONObject("snippet").getJSONObject("thumbnails")
-          .getJSONObject("default").getString("url");  //썸내일 이미지 URL값
-      sdata.add(new SearchData(videoId, changString, imgUrl, date));
+      /* Add highlight_url instead of video_id in the first argument */
+      sdata.add(new SearchData(highlight_url, video_name, imgUrl, ""));
     }
 
   }
@@ -186,18 +147,6 @@ public class HighlightListActivity extends AppCompatActivity {
       String new_url = sUrl + eUrl;
       new DownloadImageTask(img)
           .execute(new_url);
-      /*
-      URL full_url = null;
-      try {
-        full_url = new URL(new_url);
-        Bitmap bmp = BitmapFactory.decodeStream(full_url.openConnection().getInputStream());
-        img.setImageBitmap(bmp);
-      } catch (MalformedURLException e) {
-        e.printStackTrace();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      */
 
       v.setTag(position);
       v.setOnClickListener(new View.OnClickListener() {
@@ -207,7 +156,7 @@ public class HighlightListActivity extends AppCompatActivity {
 
           Intent intent = new Intent(HighlightListActivity.this,
               HighlightWatchActivity.class);
-          intent.putExtra("id", items.get(pos).getVideoId());
+          intent.putExtra("highlight_url", items.get(pos).getVideoId());
           startActivity(intent); //리스트 터치시 재생하는 엑티비티로 이동합니다. 동영상 아이디를 넘겨줍니다..
         }
       });
