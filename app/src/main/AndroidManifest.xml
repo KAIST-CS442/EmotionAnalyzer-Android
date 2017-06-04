@@ -27,13 +27,17 @@
               android:theme="@style/AppTheme">
     </activity>
     <activity android:name=".VideoWatchActivity"
-              android:theme="@style/AppTheme.NoActionBar">
+              android:theme="@style/AppTheme.NoActionBar"
+              android:screenOrientation="landscape"
+              android:configChanges="orientation|keyboardHidden">
     </activity>
     <activity android:name=".HighlightListActivity"
               android:theme="@style/AppTheme">
     </activity>
     <activity android:name=".HighlightWatchActivity"
-              android:theme="@style/AppTheme.NoActionBar">
+              android:theme="@style/AppTheme.NoActionBar"
+              android:screenOrientation="landscape"
+              android:configChanges="orientation|keyboardHidden">
     </activity>
   </application>
 

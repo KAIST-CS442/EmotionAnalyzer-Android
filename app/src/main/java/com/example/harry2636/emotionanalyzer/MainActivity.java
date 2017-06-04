@@ -6,8 +6,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.view.View;
-import android.widget.Button;
 
 /**
  * Created by harrykim on 2017. 5. 23..
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
           ASK_MULTIPLE_PERMISSION);
     }
 
-    Button videoWatchPageButton = (Button) findViewById(R.id.videoListPageButton);
+    CardView videoWatchPageButton = (CardView) findViewById(R.id.videoListPageButton);
     videoWatchPageButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
       }
     });
 
-    Button highlightWatchPageButton = (Button) findViewById(R.id.highlightListPageButton);
+    CardView highlightWatchPageButton = (CardView) findViewById(R.id.highlightListPageButton);
     highlightWatchPageButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {

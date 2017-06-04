@@ -72,7 +72,7 @@ public class VideoListActivity extends AppCompatActivity {
     @Override
     protected Void doInBackground(Void... params) {
       try {
-        paringJsonData(searchFromYouTube());
+        parsingJsonData(searchFromYouTube());
       } catch (JSONException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -101,13 +101,14 @@ public class VideoListActivity extends AppCompatActivity {
             + "part=snippet&q=" + et.getText().toString()
             + "&key="+ Configuration.API_KEY+"&maxResults=50";
 
+    Log.e("queryUrl", queryUrl);
     JSONObject searchJson = getJsonFromUrl(queryUrl);
 
     return searchJson;
   }
 
   //파싱을 하면 여러가지 값을 얻을 수 있는데 필요한 값들을 세팅하셔서 사용하시면 됩니다.
-  private void paringJsonData(JSONObject jsonObject) throws JSONException {
+  private void parsingJsonData(JSONObject jsonObject) throws JSONException {
     sdata.clear();
 
     Log.e("search_result", jsonObject.toString());
@@ -144,8 +145,6 @@ public class VideoListActivity extends AppCompatActivity {
           .substring(0, 10);
       String imgUrl = c.getJSONObject("snippet").getJSONObject("thumbnails")
           .getJSONObject("default").getString("url");  //썸내일 이미지 URL값
-
-      Log.e("img", imgUrl);
       sdata.add(new SearchData(videoId, changString, imgUrl, date));
     }
 
@@ -224,10 +223,11 @@ public class VideoListActivity extends AppCompatActivity {
   private JSONObject getJsonFromUrl (String requestString) {
     JSONObject result = null;
     try {
-      URL requestUrl = new URL(requestString);
+      URL requestUrl = new URL(requestString.replace(" ", "%20"));
       HttpURLConnection urlConnection = (HttpURLConnection) requestUrl.openConnection();
       InputStream inputStream = new BufferedInputStream(urlConnection.getInputStream());
       result = getJsonFromStream(inputStream);
+      Log.e("getJsonFromUrl", result.toString());
     } catch (MalformedURLException e) {
       e.printStackTrace();
     } catch (IOException e) {

@@ -21,7 +21,7 @@
       <FrameLayout
           android:id="@+id/camera_preview"
           android:layout_width="match_parent"
-          android:layout_height="20px"/>
+          android:layout_height="1px"/>
 
       <!-- <Button
           android:id="@+id/button_capture"

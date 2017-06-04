@@ -7,22 +7,23 @@
   <LinearLayout android:layout_width="match_parent"
                 android:layout_height="50dip"
                 android:orientation="horizontal" >
-    <EditText android:id="@+id/eturl" android:layout_width="200dip"
+    <EditText android:id="@+id/eturl" android:layout_width="wrap_content"
               android:layout_height="50dip"
+              android:layout_weight="1"
               android:layout_alignParentLeft="true"
               android:layout_alignParentRight="true"
-              android:hint="검색어를 입력하세요"
+              android:hint="Write keywords"
               android:imeOptions="actionGo"
               android:singleLine="true" >
     </EditText>
     <Button android:id="@+id/search"
-            android:layout_width="50dip"
+            android:layout_width="wrap_content"
             android:layout_height="50dip"
+            android:layout_weight="0"
             android:layout_marginLeft="10dip"
-            android:background="#000000"
             android:gravity="center"
-            android:text="검색"
-            android:textColor="#ffffff" />
+            android:text="Search"
+            android:theme="@style/AppTheme.Button"/>
   </LinearLayout>
   <ListView android:id="@+id/searchlist"
             android:layout_width="fill_parent"
