@@ -26,6 +26,7 @@
             android:theme="@style/AppTheme.Button"/>
   </LinearLayout>
   <ListView android:id="@+id/searchlist"
+            android:background="@color/buttonText"
             android:layout_width="fill_parent"
             android:layout_height="500dip" >
   </ListView>
