@@ -25,11 +25,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 /**
@@ -82,7 +80,7 @@ public class HighlightListActivity extends AppCompatActivity {
   }
 
   public JSONObject getListFromServer() {
-    String queryUrl = Configuration.SERVER_ADDRESS + "/list";
+    String queryUrl = Configuration.SERVER_ADDRESS + "/highlight/list";
     JSONObject searchJson = getJsonFromUrl(queryUrl);
     return searchJson;
   }
@@ -95,6 +93,11 @@ public class HighlightListActivity extends AppCompatActivity {
 
     JSONArray contacts = jsonObject.getJSONArray("items");
 
+    for (int i = 0; i <contacts.length(); i++) {
+      JSONObject highlight = contacts.getJSONObject(i);
+      String video_name = highlight.getString("video_name");
+    }
+
     for (int i = 0; i < contacts.length(); i++) {
       /* returns [{ video_id: 'video_id', video_name: 'video_name',
        * highlight_url: 'highlight_url', thumbnail_url: 'thumbnail_url'}]
@@ -102,8 +105,24 @@ public class HighlightListActivity extends AppCompatActivity {
       JSONObject highlight = contacts.getJSONObject(i);
       String video_id = highlight.getString("video_id");
       String video_name = highlight.getString("video_name");
+
+      int name_counter = 0;
+      for (int j = 0; j < i; j++) {
+        JSONObject previous_highlight = contacts.getJSONObject(i);
+        String previous_video_name = previous_highlight.getString("video_name");
+        if (video_name == previous_video_name) {
+          name_counter++;
+        }
+      }
+
+      if (name_counter != 0) {
+        video_name = video_name + "-" + name_counter;
+      }
+
       String highlight_url = highlight.getString("highlight_url");
+      highlight_url = Configuration.SERVER_ADDRESS + "/" + highlight_url;
       String imgUrl = highlight.getString("thumbnail_url");
+      imgUrl = Configuration.SERVER_ADDRESS + "/" + imgUrl;
 
       /* Add highlight_url instead of video_id in the first argument */
       sdata.add(new SearchData(highlight_url, video_name, imgUrl, ""));
@@ -133,18 +152,9 @@ public class HighlightListActivity extends AppCompatActivity {
       ImageView img = (ImageView) v.findViewById(R.id.img);
 
       String url = fInfo.getUrl();
+      Log.e("fInfo url", url);
 
-      String sUrl = "";
-      String eUrl = "";
-      sUrl = url.substring(0, url.lastIndexOf("/") + 1);
-      eUrl = url.substring(url.lastIndexOf("/") + 1, url.length());
-      try {
-        eUrl = URLEncoder.encode(eUrl, "EUC-KR").replace("+", "%20");
-      } catch (UnsupportedEncodingException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      String new_url = sUrl + eUrl;
+      String new_url = url;
       new DownloadImageTask(img)
           .execute(new_url);
 
