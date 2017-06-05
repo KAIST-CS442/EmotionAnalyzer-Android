@@ -341,7 +341,7 @@ public class VideoWatchActivity extends YouTubeBaseActivity implements  YouTubeP
         mCamera.takePicture(null, null, mPicture);
         Log.d("position", VideoWatchActivity.player.getCurrentTimeMillis() + "");
         try {
-          Thread.sleep(1000);
+          Thread.sleep(3000);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
