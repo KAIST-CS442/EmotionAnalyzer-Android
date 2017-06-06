@@ -48,6 +48,7 @@ public class VideoListActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.video_list);
+    setTitle("Video List");
 
     et = (EditText) findViewById(R.id.eturl);
 

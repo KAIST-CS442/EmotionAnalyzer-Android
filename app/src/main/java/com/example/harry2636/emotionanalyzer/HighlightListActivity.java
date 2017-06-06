@@ -43,6 +43,7 @@ public class HighlightListActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.highlight_list);
+    setTitle("Hightlight List");
 
     highlightTask = new GetHighlightTask().execute();
   }
