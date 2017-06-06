@@ -7,8 +7,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
+import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import java.io.BufferedInputStream;
@@ -35,6 +38,17 @@ public class HighlightWatchActivity extends AppCompatActivity {
     setContentView(R.layout.highlight_watch);
     Intent listIntent = getIntent();
     String highlight_url = listIntent.getStringExtra("highlight_url");
+    int startTime = listIntent.getIntExtra("start_time", 0);
+    int endTime = listIntent.getIntExtra("end_time", 0);
+
+    String message = "start time: " + startTime + "sec" + "\n";
+    message += "end time: " + endTime + "sec";
+
+    Toast toast = Toast.makeText (getApplicationContext(), message, Toast.LENGTH_LONG);
+    ViewGroup group = (ViewGroup) toast.getView();
+    TextView messageTextView = (TextView) group.getChildAt(0);
+    messageTextView.setTextSize(25);
+    toast.show();
 
     DownloadVideoTask videoTask = new DownloadVideoTask();
     videoTask.execute(highlight_url);

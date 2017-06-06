@@ -10,6 +10,7 @@ public class SearchData {
   String title;
   String url;
   String publishedAt;
+  int startTime, endTime;
 
   public SearchData(String videoId, String title, String url,
                     String publishedAt) {
@@ -18,6 +19,17 @@ public class SearchData {
     this.title = title;
     this.url = url;
     this.publishedAt = publishedAt;
+  }
+
+  public SearchData(String videoId, String title, String url,
+                    String publishedAt, int startTime, int endTime) {
+    super();
+    this.videoId = videoId;
+    this.title = title;
+    this.url = url;
+    this.publishedAt = publishedAt;
+    this.startTime = startTime;
+    this.endTime = endTime;
   }
 
   public String getVideoId() {
@@ -50,5 +62,22 @@ public class SearchData {
 
   public void setPublishedAt(String publishedAt) {
     this.publishedAt = publishedAt;
+  }
+
+  public int getStartTime() {
+    return this.startTime;
+  }
+
+  public void setStartTime(int startTime) {
+    this.startTime = startTime;
+  }
+
+  public int getEndTime() {
+    return this.endTime;
+  }
+
+  public void setEndTime(int endTime) {
+    this.endTime = endTime;
+
   }
 }

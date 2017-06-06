@@ -125,8 +125,11 @@ public class HighlightListActivity extends AppCompatActivity {
       String imgUrl = highlight.getString("thumbnail_url");
       imgUrl = Configuration.SERVER_ADDRESS + "/" + imgUrl;
 
+      int startTime = highlight.getInt("start");
+      int endTime = highlight.getInt("end");
+
       /* Add highlight_url instead of video_id in the first argument */
-      sdata.add(new SearchData(highlight_url, video_name, imgUrl, ""));
+      sdata.add(new SearchData(highlight_url, video_name, imgUrl, "", startTime, endTime));
     }
 
   }
@@ -168,6 +171,8 @@ public class HighlightListActivity extends AppCompatActivity {
           Intent intent = new Intent(HighlightListActivity.this,
               HighlightWatchActivity.class);
           intent.putExtra("highlight_url", items.get(pos).getVideoId());
+          intent.putExtra("start_time", items.get(pos).getStartTime());
+          intent.putExtra("end_time", items.get(pos).getEndTime());
           startActivity(intent); //리스트 터치시 재생하는 엑티비티로 이동합니다. 동영상 아이디를 넘겨줍니다..
         }
       });
