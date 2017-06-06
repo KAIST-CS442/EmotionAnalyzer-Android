@@ -218,7 +218,7 @@ public class VideoWatchActivity extends YouTubeBaseActivity implements  YouTubeP
       synchronized (sendLock) {
         sendFlag = false;
       }
-      Toast.makeText(VideoWatchActivity.this, "Video is paused", Toast.LENGTH_LONG).show();
+      //Toast.makeText(VideoWatchActivity.this, "Video is paused", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -226,7 +226,7 @@ public class VideoWatchActivity extends YouTubeBaseActivity implements  YouTubeP
       synchronized (sendLock) {
         sendFlag = true;
       }
-      Toast.makeText(VideoWatchActivity.this, "Video is playing", Toast.LENGTH_LONG).show();
+      //Toast.makeText(VideoWatchActivity.this, "Video is playing", Toast.LENGTH_LONG).show();
 
       PictureLoopTask pictureLoopTask = new PictureLoopTask();
       pictureLoopTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -241,7 +241,7 @@ public class VideoWatchActivity extends YouTubeBaseActivity implements  YouTubeP
       synchronized (sendLock) {
         sendFlag = false;
       }
-      Toast.makeText(VideoWatchActivity.this, "Video is stopped", Toast.LENGTH_LONG).show();
+      //Toast.makeText(VideoWatchActivity.this, "Video is stopped", Toast.LENGTH_LONG).show();
     }
   };
   private YouTubePlayer.PlayerStateChangeListener playerStateChangeListener = new YouTubePlayer.PlayerStateChangeListener() {
