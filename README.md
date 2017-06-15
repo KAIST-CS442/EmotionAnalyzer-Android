@@ -3,7 +3,7 @@ Highlight generator app by recognizing the reaction of users. The application ca
 
 ## Device support
 * Android device with the version higher than Android 6.0 Marshmallow is recommended to run the app.
-* Device should have camera to caputure a user's face. 
+* Device should have camera to capture a user's face. 
 
 ## Build process
 1. Set the server ip address by changing the value of SERVER_ADDRESS in Configuration.
